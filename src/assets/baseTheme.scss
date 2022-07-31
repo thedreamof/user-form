@@ -1,0 +1,24 @@
+:root {
+    --background-1: #ffffff;
+    --background-2: #f4f5f5;
+    --background-3: #f5f6f6;
+    --background-4: #f9f9f9;
+    --background-5: #505457;
+    --background-6: #363a3e;
+    --background-7: #2b2e32;
+    --basic: #f3f3f3;
+    --primary: #283897;
+    --secondary: #ee0000;
+    --text-light: #b8b8b8;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    min-height: 100vh;
+    font-family: sans-serif;
+}
