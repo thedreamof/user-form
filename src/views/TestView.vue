@@ -8,7 +8,7 @@
           <div class="title">Beneficiarios</div>
         </div>
       </div>
-      <button class="button is-primary">+Nuevo</button>
+      <button class="button is-primary" @click="restartForm">+ Nuevo</button>
     </div>
 
     <div class="actions-right">
@@ -19,8 +19,22 @@
           <div class="title">Adrian Ortiz Martines</div>
         </div>
       </div>
-      <button class="button is-primary">Guardar</button>
-      <button class="button is-secondary">-Eliminar</button>
+      <button
+        class="button is-primary"
+        :class="{ 'is-disabled': formError || !formValidate.isValidate }"
+        @click="createUser"
+        :disabled="formError || !formValidate.isValidate"
+      >
+        Guardar
+      </button>
+      <button
+        class="button is-secondary"
+        :class="{ 'is-disabled': formError || !formValidate.isValidate }"
+        @click="deleteUser"
+        :disabled="formError || !formValidate.isValidate"
+      >
+        - Eliminar
+      </button>
     </div>
   </div>
 
@@ -31,32 +45,18 @@
       </div>
 
       <div class="list-card">
-        <div class="list-item active">
+        <div
+          class="list-item"
+          :class="{ active: user.id === userSelected?.id }"
+          v-for="user in users"
+          :key="user.id"
+          @click="editUser(user)"
+        >
           <div class="info-page">
             <div class="logo"></div>
             <div class="info">
               <div class="subtitle">Beneficiario</div>
-              <div class="title">Adrian Ortiz Martines</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="list-item">
-          <div class="info-page">
-            <div class="logo"></div>
-            <div class="info">
-              <div class="subtitle">Beneficiario</div>
-              <div class="title">Adrian Ortiz Martines</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="list-item">
-          <div class="info-page">
-            <div class="logo"></div>
-            <div class="info">
-              <div class="subtitle">Beneficiario</div>
-              <div class="title">Adrian Ortiz Martines</div>
+              <div class="title">{{ user.fullName }}</div>
             </div>
           </div>
         </div>
@@ -71,34 +71,199 @@
       <div class="form">
         <div class="field">
           <label class="label">
-            <span> Nombre completo</span>
-            <input class="input" type="text" />
-          </label>
-        </div>
-        <div class="field">
-          <label class="label">
-            <span> No. Tarjeta</span>
-            <input class="input" type="number" />
-          </label>
-        </div>
-        <div class="field">
-          <label class="label">
-            <span> Saldo</span>
+            <span>Nombre completo</span>
             <input
               class="input"
-              type="number"
-              min="0.00"
-              max="10000.00"
-              step="0.01"
+              v-model="form.fullName"
+              @blur="validateForm('fullName')"
+              type="text"
             />
           </label>
+          <span v-if="!formValidate.fullName" class="error">
+            Error unicamente se permiten letras y acentos
+          </span>
         </div>
+        <div class="field">
+          <label class="label">
+            <span>No. Tarjeta</span>
+            <input
+              class="input"
+              v-model="form.cardNumber"
+              @blur="validateForm('cardNumber')"
+              type="text"
+            />
+          </label>
+          <span v-if="!formValidate.cardNumber" class="error">
+            Error unicamente se permiten números
+          </span>
+        </div>
+        <div class="field">
+          <label class="label">
+            <span>Saldo</span>
+            <input
+              class="input"
+              v-model.number="form.balance"
+              @blur="validateForm('balance')"
+              type="text"
+            />
+            <!-- <input
+              class="input"
+              :value="userBalance"
+              @blur="validateForm('balance')"
+              type="text"
+              disabled
+            /> -->
+          </label>
+          <span v-if="!formValidate.balance" class="error">
+            Error unicamente se permiten números
+          </span>
+        </div>
+        {{ userBalance }}
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { computed } from 'vue';
+import { ref } from 'vue';
+import type { UserI } from '@/interfaces/user';
+import userMock from '@/mock/user';
+
+// --- Variables
+const users = ref<Array<UserI>>([]);
+const userSelected = ref<UserI>();
+const form = ref<UserI>({
+  id: '',
+  fullName: '',
+  cardNumber: null,
+  balance: null,
+});
+
+const formValidate = ref<any>({
+  isValidate: false,
+  fullName: true,
+  cardNumber: true,
+  balance: true,
+});
+
+const formError = computed(() => {
+  if (
+    !formValidate.value.fullName ||
+    !formValidate.value.cardNumber ||
+    !formValidate.value.balance
+  ) {
+    return true;
+  }
+  return false;
+});
+
+const validateForm = (field = '') => {
+  formValidate.value.isValidate = true;
+  const regex = /^[\sa-zA-Z\u00C0-\u017F]+$/; // espacios, letras y acentos
+  switch (field) {
+    case 'fullName':
+      formValidate.value[field] = !!form.value.fullName.match(regex)?.length;
+      break;
+    case 'cardNumber':
+      formValidate.value[field] = Number(form.value.cardNumber);
+      break;
+    case 'balance':
+      formValidate.value[field] = Number(form.value.balance);
+      break;
+    default:
+      formValidate.value.fullName = !!form.value.fullName.match(regex)?.length;
+      formValidate.value.cardNumber = Number(form.value.cardNumber);
+      formValidate.value.balance = Number(form.value.balance);
+      break;
+  }
+};
+
+// --- functions
+const userBalance = computed(() =>
+  form.value.balance?.toLocaleString('en-US', { minimumFractionDigits: 2 })
+);
+
+const generateId = () =>
+  Math.floor(Math.random() * (100000 - 1000 + 1) + 1000).toString();
+
+const resetForm = () => {
+  form.value.id = '';
+  form.value.fullName = '';
+  form.value.cardNumber = null;
+  form.value.balance = null;
+};
+
+const resetFormValidation = () => {
+  formValidate.value.isValidate = false;
+  formValidate.value.fullName = true;
+  formValidate.value.cardNumber = true;
+  formValidate.value.balance = true;
+};
+
+const deleteRepeated = (data: Array<any>) => {
+  data = data.filter((item, index) => {
+    return data.findIndex((element) => element.id === item.id) === index;
+  });
+  return data;
+};
+
+const getUserTemp = () => {
+  const usersSaved = JSON.parse(localStorage.getItem('users') || '[]');
+  users.value = [...userMock, ...usersSaved];
+  users.value = deleteRepeated(users.value);
+};
+
+const getUsers = () => {
+  const usersSaved = JSON.parse(localStorage.getItem('users') || '[]');
+  users.value = [...usersSaved];
+};
+
+const restartForm = () => {
+  userSelected.value = undefined;
+  resetForm();
+  resetFormValidation();
+};
+
+const createUser = () => {
+  const user = { ...form.value };
+
+  if (!userSelected.value?.id) {
+    // --- Create
+    user.id = generateId();
+    users.value.push(user);
+    localStorage.setItem('users', JSON.stringify(users.value));
+  } else {
+    // --- Edit
+    users.value = users.value.map((x) => {
+      if (x.id === user.id) return user;
+      return x;
+    });
+  }
+
+  localStorage.setItem('users', JSON.stringify(users.value));
+  restartForm();
+  getUsers();
+};
+
+const editUser = (user: UserI) => {
+  userSelected.value = user;
+  form.value = { ...user };
+  validateForm();
+};
+
+const deleteUser = () => {
+  users.value = users.value.filter(
+    (user) => user.id !== userSelected.value?.id
+  );
+  localStorage.setItem('users', JSON.stringify(users.value));
+  restartForm();
+  getUsers();
+};
+
+// --- Initialized functions
+getUserTemp();
+</script>
 
 <style scoped lang="scss">
 .actions {
@@ -263,6 +428,11 @@
 
 .field {
   margin: 15px 0;
+
+  .error {
+    font-size: 0.8rem;
+    color: var(--secondary);
+  }
 }
 
 .label {

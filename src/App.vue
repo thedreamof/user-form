@@ -14,9 +14,11 @@ import TestView from './views/TestView.vue';
   display: block;
   background: var(--basic);
   padding: 10px 20px;
+  margin: 5px;
   border-radius: 20px;
   cursor: pointer;
   border: none;
+  white-space: nowrap;
 
   &:hover {
     // background: darken(var(--basic), 1);
@@ -39,6 +41,16 @@ import TestView from './views/TestView.vue';
     &:hover {
       // background: darken(var(--basic), 1);
       background: tomato;
+    }
+  }
+
+  &.is-disabled {
+    background-color: var(--background-3);
+    color: var(--text-light);
+    cursor: not-allowed;
+
+    &:hover {
+      background: lightgray;
     }
   }
 }
